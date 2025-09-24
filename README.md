@@ -9,6 +9,7 @@ El material está organizado por semanas, abordando distintas temáticas y herra
 - 🤖 **Semana 03:** SpaCy  
 - 🧮 **Semana 04:** Bag of Words y TF-IDF  
 - 🧬 **Semana 05:** Embeddings  
-- 📝 **Semana 06:** Trabajo Práctico Integrador  
+- 📝 **Semana 06:** Words To Vect W2V
+- 🌟 **Semana 07:** Trabajo Práctico Integrador  
 
 Cada carpeta semanal incluye ejercicios prácticos y ejemplos para facilitar el aprendizaje de técnicas modernas de PLN usando Python y sus principales librerías.  
