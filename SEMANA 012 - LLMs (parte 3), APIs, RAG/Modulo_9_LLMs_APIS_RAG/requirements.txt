@@ -1,0 +1,106 @@
+# =============================================================================
+# MODULO 9: LLMs, APIs y RAG - Dependencias de Python
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# APIs de LLMs
+# -----------------------------------------------------------------------------
+openai>=1.0.0                    # OpenAI API (GPT-4, GPT-3.5)
+google-generativeai>=0.3.0       # Google Gemini API
+langchain>=0.1.0                 # Framework para aplicaciones LLM
+langchain-openai>=0.0.5          # Integración LangChain con OpenAI
+langchain-google-genai>=0.0.6    # Integración LangChain con Gemini
+langchain-community>=0.0.20      # Loaders y utilidades comunitarias
+
+# -----------------------------------------------------------------------------
+# RAG y Vector Databases
+# -----------------------------------------------------------------------------
+langchain-chroma>=0.1.0          # ChromaDB para LangChain
+chromadb>=0.4.0                  # Base de datos vectorial
+sentence-transformers>=2.2.0     # Embeddings locales multilingües
+faiss-cpu>=1.7.4                 # Búsqueda de similitud (alternativa)
+
+# -----------------------------------------------------------------------------
+# Procesamiento de Documentos
+# -----------------------------------------------------------------------------
+pypdf>=3.17.0                    # Lectura de PDFs
+python-docx>=1.0.0               # Lectura de Word
+beautifulsoup4>=4.12.0           # Web scraping
+lxml>=4.9.0                      # Parser XML/HTML
+requests>=2.31.0                 # HTTP requests
+
+# -----------------------------------------------------------------------------
+# LLMs Locales
+# -----------------------------------------------------------------------------
+ollama>=0.1.0                    # Cliente Python para Ollama
+torch>=2.0.0                     # PyTorch (para modelos locales)
+transformers>=4.35.0             # Hugging Face Transformers
+
+# -----------------------------------------------------------------------------
+# Análisis de Datos
+# -----------------------------------------------------------------------------
+pandas>=2.0.0                    # Manipulación de datos
+numpy>=1.24.0                    # Operaciones numéricas
+openpyxl>=3.1.0                  # Lectura/escritura Excel
+
+# -----------------------------------------------------------------------------
+# Visualización e Interfaces
+# -----------------------------------------------------------------------------
+gradio>=4.0.0                    # Interfaces web para ML
+matplotlib>=3.7.0                # Gráficos básicos
+plotly>=5.17.0                   # Gráficos interactivos
+
+# -----------------------------------------------------------------------------
+# Utilidades
+# -----------------------------------------------------------------------------
+python-dotenv>=1.0.0             # Carga variables de entorno (.env)
+tqdm>=4.66.0                     # Barras de progreso
+pydantic>=2.0.0                  # Validación de datos
+tenacity>=8.2.0                  # Retry logic para APIs
+
+# -----------------------------------------------------------------------------
+# Jupyter y Notebooks
+# -----------------------------------------------------------------------------
+jupyter>=1.0.0                   # Jupyter Notebook
+ipykernel>=6.25.0                # Kernel de Python para Jupyter
+ipywidgets>=8.1.0                # Widgets interactivos
+
+# -----------------------------------------------------------------------------
+# Búsqueda Web (opcional)
+# -----------------------------------------------------------------------------
+google-search-results>=2.4.2     # SERP API para búsqueda web
+
+# =============================================================================
+# NOTAS DE INSTALACIÓN
+# =============================================================================
+
+# Para instalar todas las dependencias:
+# pip install -r requirements.txt
+
+# Para instalar sin Jupyter (si usas solo Google Colab):
+# pip install -r requirements.txt --no-deps jupyter ipykernel ipywidgets
+
+# Para actualizar todas las dependencias:
+# pip install -r requirements.txt --upgrade
+
+# =============================================================================
+# DEPENDENCIAS OPCIONALES POR NOTEBOOK
+# =============================================================================
+
+# 01-02-03: OpenAI/Gemini APIs
+# - openai, google-generativeai, python-dotenv
+
+# 04: Carga de Documentos
+# - pypdf, beautifulsoup4, langchain-community
+
+# 05: Bases de Datos Vectoriales
+# - chromadb, sentence-transformers, langchain-chroma
+
+# 06: Sistema RAG Completo
+# - Todas las anteriores + langchain
+
+# 07: Ollama LLMs Locales
+# - ollama, pandas, gradio
+
+# 08: Búsqueda Web
+# - google-search-results, openai

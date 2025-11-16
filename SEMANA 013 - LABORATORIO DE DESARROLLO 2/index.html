@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente NLP</title>
+</head>
+
+<body>
+    <center>
+        <h1>Asistente de Procesamiento de Lenguaje Natural</h1>
+        
+        <table border="1" cellpadding="10" cellspacing="0" width="700">
+            <tr>
+                <td bgcolor="#f0f0f0">
+                    <b>¿Cómo usar el asistente?</b><br><br>
+                    Iniciá tu mensaje con alguna de estas palabras clave para activar tareas específicas:<br><br>
+                    <b>• "ner"</b> o <b>"entidades"</b> → Extracción de entidades nombradas (personas, lugares, organizaciones)<br>
+                    <b>• "sentimiento"</b> → Análisis de sentimiento del texto (positivo, negativo, neutral)<br>
+                    <b>• "resumen"</b> o <b>"resume"</b> → Sumarización del contenido<br>
+                    <b>• "clasifica"</b> → Clasificación del tipo y tema del texto<br>
+                    <b>• "palabras clave"</b> o <b>"keywords"</b> → Extracción de términos importantes<br>
+                    <b>• "ayuda"</b> → Mostrar información completa de todas las funciones<br><br>
+                    Si no usás ninguna palabra clave, el asistente responderá de forma conversacional.
+                </td>
+            </tr>
+        </table>
+
+        <br><br>
+
+        <table width="700">
+            <tr>
+                <td>
+                    <b>Tu consulta:</b><br>
+                    <textarea id="mensaje" rows="6" cols="85" placeholder="Ejemplo: ner Juan viajó a Madrid en 2024&#10;&#10;O: sentimiento Me encanta este producto&#10;&#10;Presioná Ctrl+Enter para enviar rápido"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <td align="center">
+                    <br>
+                    <button onclick="enviar()" style="padding: 10px 30px; font-size: 16px; cursor: pointer;">Enviar (Ctrl+Enter)</button>
+                </td>
+            </tr>
+        </table>
+
+        <br><br>
+
+        <table width="700">
+            <tr>
+                <td>
+                    <b>Respuesta del asistente:</b><br>
+                    <textarea id="respuesta" rows="15" cols="85" readonly style="background-color: #f9f9f9;"></textarea>
+                </td>
+            </tr>
+        </table>
+
+        <br>
+        <small>Asistente NLP - Procesamiento de Lenguaje Natural con n8n + Ollama</small>
+
+    </center>
+
+    <script>
+        async function enviar() {
+            const mensaje = document.getElementById('mensaje').value;
+            const respuestaTextarea = document.getElementById('respuesta');
+
+            if (!mensaje.trim()) {
+                respuestaTextarea.value = 'Por favor, escribí tu consulta antes de enviar.';
+                return;
+            }
+
+            respuestaTextarea.value = '⏳ Procesando tu consulta...\n\nEsto puede tomar entre 5-30 segundos dependiendo de la complejidad del análisis.\n\nEsperá por favor...';
+
+            try {
+                const response = await fetch('http://localhost:5678/webhook/asistente-nlp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mensaje: mensaje })
+                });
+
+                const ct = response.headers.get('content-type') || '';
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${text}`);
+                }
+                
+                if (ct.includes('application/json')) {
+                    const data = await response.json();
+                    
+                    let output = '';
+                    if (data.respuesta) {
+                        output += data.respuesta;
+                    } else {
+                        output = JSON.stringify(data, null, 2);
+                    }
+                    
+                    if (data.tarea_realizada) {
+                        output += '\n\n' + '='.repeat(50) + '\n';
+                        output += '📊 Metadatos:\n';
+                        output += '   • Tarea detectada: ' + data.tarea_realizada + '\n';
+                        output += '   • Timestamp: ' + data.timestamp;
+                    }
+                    
+                    respuestaTextarea.value = output;
+                } else {
+                    const text = await response.text();
+                    respuestaTextarea.value = text;
+                }
+            } catch (error) {
+                respuestaTextarea.value = '❌ Error al procesar la solicitud:\n\n' +
+                    'Detalles: ' + error.message + '\n\n' +
+                    '🔍 Verificá:\n' +
+                    '   • El workflow esté activo en n8n (http://localhost:5678)\n' +
+                    '   • Ollama esté ejecutándose (modelo granite4:latest)\n' +
+                    '   • La conexión de red esté funcionando';
+            }
+        }
+
+        document.getElementById('mensaje').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                enviar();
+            }
+        });
+    </script>
+</body>
+
+</html>

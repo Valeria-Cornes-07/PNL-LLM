@@ -1,0 +1,324 @@
+================================================================================
+  GUÍA: CONFIGURACIÓN DE N8N + OLLAMA CON DOCKER COMPOSE
+================================================================================
+
+DESCRIPCIÓN:
+Esta guía explica cómo configurar n8n y Ollama usando Docker Compose para
+trabajar con herramientas de código abierto en procesamiento de lenguaje natural.
+
+================================================================================
+PASO 1: CREAR EL ARCHIVO DOCKER-COMPOSE.YML
+================================================================================
+
+1.1. Crear directorio para el proyecto (opcional pero recomendado):
+
+   mkdir n8n-ollama-project
+   cd n8n-ollama-project
+
+1.2. Crear el archivo docker-compose.yml con el siguiente contenido:
+
+--------------------------------------------------------------------------------
+version: '3.8'
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - GENERIC_TIMEZONE=America/Argentina/Buenos_Aires
+      - TZ=America/Argentina/Buenos_Aires
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_RUNNERS_ENABLED=true
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - n8n-network
+    depends_on:
+      - ollama
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    environment:
+      - TZ=America/Argentina/Buenos_Aires
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - n8n-network
+
+volumes:
+  n8n_data:
+  ollama_data:
+
+networks:
+  n8n-network:
+    driver: bridge
+--------------------------------------------------------------------------------
+
+NOTA: Ajusta GENERIC_TIMEZONE y TZ según tu zona horaria.
+
+
+================================================================================
+PASO 2: MIGRAR DESDE N8N EXISTENTE (SI YA TIENES UNO)
+================================================================================
+
+2.1. Ver configuración actual de tu contenedor n8n:
+
+   docker ps
+   docker inspect n8n --format='{{range .Config.Env}}{{println .}}{{end}}'
+
+2.2. Detener el contenedor actual (NO SE PIERDEN DATOS):
+
+   docker stop n8n
+
+2.3. Renombrar como backup (opcional pero recomendado):
+
+   docker rename n8n n8n_backup
+
+NOTA: Si algo sale mal, puedes volver a iniciarlo con:
+   docker start n8n_backup
+
+
+================================================================================
+PASO 3: LEVANTAR LOS SERVICIOS CON DOCKER COMPOSE
+================================================================================
+
+3.1. Levantar los contenedores en modo detached (-d):
+
+   docker-compose up -d
+
+3.2. Verificar que los contenedores están corriendo:
+
+   docker-compose ps
+
+   Deberías ver algo como:
+   NAME      IMAGE                           STATUS         PORTS
+   n8n       docker.n8n.io/n8nio/n8n        Up X minutes   0.0.0.0:5678->5678/tcp
+   ollama    ollama/ollama:latest            Up X minutes   0.0.0.0:11434->11434/tcp
+
+3.3. Ver logs en tiempo real:
+
+   docker-compose logs -f
+
+   O logs de un servicio específico:
+   docker-compose logs -f n8n
+   docker-compose logs -f ollama
+
+
+================================================================================
+PASO 4: CONFIGURAR OLLAMA Y DESCARGAR MODELOS
+================================================================================
+
+4.1. Descargar un modelo de lenguaje (elige uno):
+
+   # Modelo pequeño y rápido (1B parámetros):
+   docker exec -it ollama ollama pull llama3.2:1b
+
+   # Modelo mediano (3B parámetros):
+   docker exec -it ollama ollama pull llama3.2
+
+   # Modelo más grande y preciso (8B parámetros):
+   docker exec -it ollama ollama pull llama3.1:8b
+
+4.2. Listar modelos instalados:
+
+   docker exec -it ollama ollama list
+
+4.3. Probar Ollama manualmente:
+
+   docker exec -it ollama ollama run llama3.2
+
+   (Escribe un prompt y presiona Enter. Usa /bye para salir)
+
+
+================================================================================
+PASO 5: ACCEDER A LOS SERVICIOS
+================================================================================
+
+5.1. Acceder a n8n:
+
+   Navegador: http://localhost:5678
+
+   Primera vez: Crea tu usuario y contraseña
+
+5.2. API de Ollama (desde tu máquina local):
+
+   http://localhost:11434
+
+5.3. Desde n8n (dentro de workflows):
+
+   URL: http://ollama:11434/api/generate
+
+
+================================================================================
+PASO 6: CONECTAR N8N CON OLLAMA
+================================================================================
+
+6.1. En n8n, crear un workflow nuevo
+
+6.2. Agregar un nodo "HTTP Request" con esta configuración:
+
+   - Method: POST
+   - URL: http://ollama:11434/api/generate
+   - Authentication: None
+   - Body Content Type: JSON
+
+   Body (JSON):
+   {
+     "model": "llama3.2",
+     "prompt": "Tu texto aquí",
+     "stream": false
+   }
+
+6.3. Ejemplo de prompt para procesar texto:
+
+   {
+     "model": "llama3.2",
+     "prompt": "Resume el siguiente texto en 3 puntos: [tu texto]",
+     "stream": false
+   }
+
+
+================================================================================
+COMANDOS ÚTILES DE DOCKER COMPOSE
+================================================================================
+
+# Detener servicios (sin borrar contenedores):
+docker-compose stop
+
+# Iniciar servicios detenidos:
+docker-compose start
+
+# Reiniciar servicios:
+docker-compose restart
+
+# Detener y eliminar contenedores (mantiene volúmenes):
+docker-compose down
+
+# Detener y eliminar TODO (incluyendo volúmenes - ¡CUIDADO!):
+docker-compose down -v
+
+# Ver logs:
+docker-compose logs -f
+
+# Ver estado de los servicios:
+docker-compose ps
+
+# Actualizar las imágenes:
+docker-compose pull
+docker-compose up -d
+
+# Ejecutar comandos en un contenedor:
+docker-compose exec n8n sh
+docker-compose exec ollama sh
+
+
+================================================================================
+COMANDOS ÚTILES DE OLLAMA
+================================================================================
+
+# Listar modelos instalados:
+docker exec -it ollama ollama list
+
+# Descargar un modelo:
+docker exec -it ollama ollama pull <nombre-modelo>
+
+# Eliminar un modelo:
+docker exec -it ollama ollama rm <nombre-modelo>
+
+# Ejecutar modelo interactivamente:
+docker exec -it ollama ollama run <nombre-modelo>
+
+# Ver información del modelo:
+docker exec -it ollama ollama show <nombre-modelo>
+
+
+================================================================================
+SOLUCIÓN DE PROBLEMAS
+================================================================================
+
+PROBLEMA: Los contenedores no se comunican entre sí
+SOLUCIÓN: Verificar que ambos están en la misma red:
+   docker network inspect n8n-network
+
+PROBLEMA: Ollama no descarga modelos
+SOLUCIÓN: Verificar espacio en disco y logs:
+   docker-compose logs ollama
+   df -h
+
+PROBLEMA: n8n no guarda cambios
+SOLUCIÓN: Verificar permisos del volumen:
+   docker volume inspect n8n_data
+
+PROBLEMA: Puerto 5678 ya en uso
+SOLUCIÓN: Cambiar puerto en docker-compose.yml:
+   ports:
+     - "8080:5678"  # Usa 8080 en lugar de 5678
+
+PROBLEMA: Quiero volver a mi n8n anterior
+SOLUCIÓN:
+   docker-compose down
+   docker start n8n_backup
+   docker rename n8n_backup n8n
+
+
+================================================================================
+BACKUP Y RESTAURACIÓN
+================================================================================
+
+BACKUP DE VOLÚMENES:
+
+# Backup de n8n:
+docker run --rm -v n8n_data:/data -v $(pwd):/backup ubuntu tar czf /backup/n8n_backup.tar.gz /data
+
+# Backup de Ollama:
+docker run --rm -v ollama_data:/data -v $(pwd):/backup ubuntu tar czf /backup/ollama_backup.tar.gz /data
+
+RESTAURACIÓN:
+
+# Restaurar n8n:
+docker run --rm -v n8n_data:/data -v $(pwd):/backup ubuntu tar xzf /backup/n8n_backup.tar.gz -C /
+
+# Restaurar Ollama:
+docker run --rm -v ollama_data:/data -v $(pwd):/backup ubuntu tar xzf /backup/ollama_backup.tar.gz -C /
+
+
+================================================================================
+RECURSOS Y DOCUMENTACIÓN
+================================================================================
+
+N8N:
+- Documentación oficial: https://docs.n8n.io/
+- Docker Hub: https://hub.docker.com/r/n8nio/n8n
+
+Ollama:
+- Documentación oficial: https://ollama.ai/
+- Modelos disponibles: https://ollama.ai/library
+- GitHub: https://github.com/ollama/ollama
+
+Docker Compose:
+- Documentación: https://docs.docker.com/compose/
+
+
+================================================================================
+NOTAS FINALES
+================================================================================
+
+- Los datos persisten en volúmenes Docker incluso si eliminas los contenedores
+- Ollama descarga los modelos una sola vez y los guarda en ollama_data
+- n8n guarda workflows, credenciales y configuración en n8n_data
+- La red n8n-network permite comunicación entre contenedores usando sus nombres
+- Desde n8n, usa "http://ollama:11434" (no localhost)
+- Desde tu máquina, usa "http://localhost:11434"
+
+
+================================================================================
+AUTOR: Guía creada para proyecto de NLP con herramientas open source
+FECHA: 2025
+================================================================================

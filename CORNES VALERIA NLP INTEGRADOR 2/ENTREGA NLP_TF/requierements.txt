@@ -1,0 +1,19 @@
+# === Core LangChain ===
+langchain==0.3.27
+langchain-community==0.3.31
+langchain-core==0.3.79
+
+# === Embeddings & Vector Store ===
+chromadb==0.5.11
+sentence-transformers==3.0.1
+
+# === Modelos Hugging Face ===
+transformers==4.43.3
+torch==2.3.1
+huggingface_hub
+
+# === Utilidades ===
+python-dotenv==1.0.1
+gradio==4.44.0
+streamlit
+google-generativeai

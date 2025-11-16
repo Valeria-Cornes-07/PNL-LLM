@@ -1,0 +1,186 @@
+{
+  "name": "Asistente NLP",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "asistente-nlp",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -464,
+        0
+      ],
+      "id": "fe21856e-72c1-42a0-b8a2-8ffb6be38bf8",
+      "name": "Webhook",
+      "webhookId": "fc16ba9f-e5ed-4dc9-b11f-702d5f546e33"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6d19be7e-3202-4a85-88fd-a7ac12771152",
+              "name": "mensaje_usuario",
+              "value": "={{ $json.body.mensaje || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "db13c036-61b1-4aae-a9c5-e68f963ee2ac",
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -256,
+        0
+      ],
+      "id": "0c261ae8-e9b0-4619-a82a-9d8fc6e02d1a",
+      "name": "Extraer Mensaje"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $input.first().json;\nconst mensaje = (inputData.mensaje_usuario || '').toString().toLowerCase();\nconst timestamp = inputData.timestamp;\n\nlet prompt_final = \"\";\nlet tarea_detectada = \"general\";\nlet instrucciones = \"\";\n\nif (mensaje.includes(\"ner\") || mensaje.includes(\"entidades\") || mensaje.includes(\"nombres\")) {\n  tarea_detectada = \"NER\";\n  instrucciones = \"Extrae todas las entidades nombradas y clasifícalas.\";\n  prompt_final = `Eres un experto en Named Entity Recognition (NER).\\n\\nTarea: Extrae TODAS las entidades nombradas del texto y clasifícalas en:\\n- PERSONA: nombres de personas\\n- ORGANIZACIÓN: empresas, instituciones\\n- LUGAR: ciudades, países, lugares\\n- FECHA: fechas, períodos temporales\\n- CANTIDAD: números, porcentajes, montos\\n\\nFormato de respuesta:\\nEntidad | Tipo | Contexto\\n\\nTexto a analizar:\\n${mensaje}`;\n} else if (mensaje.includes(\"sentimiento\") || mensaje.includes(\"sentiment\") || mensaje.includes(\"emoción\")) {\n  tarea_detectada = \"Análisis de Sentimiento\";\n  instrucciones = \"Analiza el sentimiento del texto.\";\n  prompt_final = `Eres un experto en Análisis de Sentimiento.\\n\\nTarea: Analiza el sentimiento del siguiente texto.\\n\\nClasifícalo como:\\n- POSITIVO\\n- NEGATIVO\\n- NEUTRAL\\n\\nProporciona:\\n1. Clasificación del sentimiento\\n2. Nivel de confianza (0-100%)\\n3. Palabras clave que indican el sentimiento\\n4. Explicación breve\\n\\nTexto a analizar:\\n${mensaje}`;\n} else if (mensaje.includes(\"resume\") || mensaje.includes(\"resumen\") || mensaje.includes(\"sumari\")) {\n  tarea_detectada = \"Sumarización\";\n  instrucciones = \"Resume el texto en puntos clave.\";\n  prompt_final = `Eres un experto en Sumarización de textos.\\n\\nTarea: Resume el siguiente texto de forma concisa.\\n\\nProporciona:\\n1. Resumen en 3-5 puntos clave\\n2. Idea principal\\n3. Longitud aproximada: 20% del texto original\\n\\nTexto a analizar:\\n${mensaje}`;\n} else if (mensaje.includes(\"clasifica\") || mensaje.includes(\"categoría\") || mensaje.includes(\"tipo de texto\")) {\n  tarea_detectada = \"Clasificación\";\n  instrucciones = \"Clasifica el tipo y tema del texto.\";\n  prompt_final = `Eres un experto en Clasificación de Textos.\\n\\nTarea: Clasifica el siguiente texto.\\n\\nProporciona:\\n1. Tipo de texto (noticia, opinión, técnico, narrativo, etc.)\\n2. Tema principal\\n3. Temas secundarios\\n4. Nivel de formalidad (formal/informal)\\n5. Audiencia objetivo\\n\\nTexto a analizar:\\n${mensaje}`;\n} else if (mensaje.includes(\"palabras clave\") || mensaje.includes(\"keywords\") || mensaje.includes(\"términos importantes\")) {\n  tarea_detectada = \"Extracción de Keywords\";\n  instrucciones = \"Extrae las palabras clave más importantes.\";\n  prompt_final = `Eres un experto en Extracción de Palabras Clave.\\n\\nTarea: Extrae las palabras clave más relevantes del texto.\\n\\nProporciona:\\n1. Top 10 palabras clave\\n2. Relevancia de cada una (Alta/Media/Baja)\\n3. Bigramas importantes (frases de 2 palabras)\\n4. Tema central\\n\\nTexto a analizar:\\n${mensaje}`;\n} else if (mensaje.includes(\"ayuda\") || mensaje.includes(\"help\") || mensaje.includes(\"qué puedes hacer\")) {\n  tarea_detectada = \"Ayuda\";\n  prompt_final = `ASISTENTE NLP - TAREAS DISPONIBLES\\n\\nPuedo ayudarte con las siguientes tareas de Procesamiento de Lenguaje Natural:\\n\\n1. NER (Named Entity Recognition)\\n   Comando: \"Extrae entidades de: [tu texto]\"\\n   Ejemplo: \"Extrae entidades de: Juan viajó a Madrid en 2024\"\\n\\n2. Análisis de Sentimiento\\n   Comando: \"Analiza el sentimiento de: [tu texto]\"\\n   Ejemplo: \"Analiza el sentimiento de: Me encanta este producto\"\\n\\n3. Sumarización\\n   Comando: \"Resume: [tu texto]\"\\n   Ejemplo: \"Resume: [texto largo]\"\\n\\n4. Clasificación de Texto\\n   Comando: \"Clasifica: [tu texto]\"\\n   Ejemplo: \"Clasifica: Este artículo habla sobre inteligencia artificial\"\\n\\n5. Extracción de Palabras Clave\\n   Comando: \"Palabras clave de: [tu texto]\"\\n   Ejemplo: \"Palabras clave de: [tu texto]\"\\n\\nTip: Simplemente escribe tu solicitud de forma natural`;\n} else {\n  tarea_detectada = \"Consulta General\";\n  instrucciones = \"Responde la consulta del usuario.\";\n  prompt_final = mensaje;\n}\n\nreturn [{\n  json: {\n    prompt: prompt_final,\n    tarea: tarea_detectada,\n    instrucciones: instrucciones,\n    mensaje_original: mensaje,\n    timestamp: timestamp\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        0
+      ],
+      "id": "d6e324c4-04da-4c08-b654-a105d01fbf54",
+      "name": "Detectar Tarea NLP"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://ollama:11434/api/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\"model\": \"granite4:latest\", \"prompt\": $json.prompt, \"stream\": false, \"temperature\": 0.7} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        144,
+        0
+      ],
+      "id": "c5f72582-8e10-4c93-add5-e5aa80125c88",
+      "name": "Ollama"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ff67ce23-4586-477b-8b3f-06e830f72d77",
+              "name": "respuesta",
+              "value": "={{ $json.response }}",
+              "type": "string"
+            },
+            {
+              "id": "676346f1-22f0-4ec7-a2ad-7e2ccc2ff090",
+              "name": "tarea_realizada",
+              "value": "={{ $('Detectar Tarea NLP').item.json.tarea }}",
+              "type": "string"
+            },
+            {
+              "id": "3ceda119-3713-4531-8c2a-216cd50338b7",
+              "name": "mensaje_original",
+              "value": "={{ $('Detectar Tarea NLP').item.json.mensaje_original }}",
+              "type": "string"
+            },
+            {
+              "id": "ec8f9367-13e6-4eb3-ad7f-71e26de9ffc4",
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        352,
+        0
+      ],
+      "id": "7d597efb-9f84-4f96-aca0-022777cf4995",
+      "name": "Formatear Respuesta"
+    }
+
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extraer Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer Mensaje": {
+      "main": [
+        [
+          {
+            "node": "Detectar Tarea NLP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detectar Tarea NLP": {
+      "main": [
+        [
+          {
+            "node": "Ollama",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama": {
+      "main": [
+        [
+          {
+            "node": "Formatear Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Respuesta": {
+      "main": [
+        [
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f2012a1d-599e-4369-a5e7-5b94f2a31266",
+  "meta": {
+    "instanceId": "fe1f68eea4b552fafe51f7c749112c02b4de33277129ba11b2445964325f80a7"
+  },
+  "tags": []
+}
