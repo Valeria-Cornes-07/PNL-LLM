@@ -30,7 +30,7 @@ Sistema de Retrieval-Augmented Generation (RAG) que permite consultar informaci√
 
 ## Tecnolog√≠as
 
-- **LLM**: google/flan-t5-large
+- **LLM**: gemini-2.5-flash
 - **Embeddings**: Sentence Transformers (all-MiniLM-L6-v2)
 - **Base de datos**: ChromaDB
 - **Interfaz**: Streamlit
